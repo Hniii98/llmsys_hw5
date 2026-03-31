@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List
 
 import torch
 import torch.nn as nn
@@ -40,8 +40,15 @@ class GPT2ModelParallel(GPT2ModelCustom):
         '''
 
         # BEGIN_HW5_2_3
-        pipe = None
-        raise NotImplementedError("Pipeline Parallel Not Implemented Yet")
+        self.pipeline_parallel = True 
+        modules_list: List[nn.Module] = []
+        for block in self.h:
+            list.append(block)
+            list.append(WithDevice(
+                            ExtractFirstItem(),
+                            _retrieve_device(block)
+            ))
+        pipe = Pipe(nn.ModuleList(modules_list, split_size))
         # END_HW5_2_3
         self.h_pp = pipe
 
