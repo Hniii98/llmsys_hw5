@@ -63,7 +63,14 @@ class Pipe(nn.Module):
         Please note that you should put the result on the last device. Putting the result on the same device as input x will lead to pipeline parallel training failing.
         '''
         # BEGIN_HW5_2_2
-        raise NotImplementedError("Pipeline Parallel Not Implemented Yet")
+        micro_batches = x.split(self.split_size, dim=0)
+        clock_schedules = _clock_cycles(len(micro_batches), len(self.partitions))
+        for schedule in clock_schedules:
+            self.compute(micro_batches, schedule)
+        
+        return torch.cat(micro_batches)
+
+            
         # END_HW5_2_2
 
     def compute(self, batches, schedule: List[Tuple[int, int]]) -> None:
@@ -79,6 +86,18 @@ class Pipe(nn.Module):
         devices = self.devices
 
         # BEGIN_HW5_2_2
-        raise NotImplementedError("Pipeline Parallel Not Implemented Yet")
+        # Fetch indices i, j of micro_batches and partitions and put relative wrapped task.
+        for i, j in schedule:
+            batch = batches[i]
+            partition = partitions[j]
+            task = Task(lambda : partition[batch])
+            self.in_queues[j].put(task)
+        
+        # Get compute result with block mode to make sure correctness.
+        for i, j in schedule:
+            status, (_, res) = self.out_queues[j].get()
+            if status is True:
+                batches[i] = res
+
         # END_HW5_2_2
 
