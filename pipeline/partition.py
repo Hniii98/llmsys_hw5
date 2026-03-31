@@ -56,13 +56,21 @@ def _split_module(modules: nn.Sequential) -> Tuple[List[nn.Sequential], List[tor
 
     current_partition = []
     current_device = None
+
+    def get_device(module : nn.Module):
+        if isinstance(module, WithDevice):
+            return module.device
+        else:
+            return _retrieve_device(module)
+
+
     for name, module in modules.named_children():
         # BEGIN_HW5_2_1
         if current_device is None:
-            current_device = module.device
+            current_device = get_device(module)
             current_partition.append(module)
         
-        if _retrieve_device(module) == current_device:
+        if get_device(module) == current_device:
             partitions.append(module)
         else:
             partitions.append(_assemble_partition(current_partition))
@@ -71,7 +79,7 @@ def _split_module(modules: nn.Sequential) -> Tuple[List[nn.Sequential], List[tor
             current_partition = []
             current_device = []
 
-            current_device = _retrieve_device(module)
+            current_device = get_device(module)
             current_partition.append(module)
         # END_HW5_2_1
 
