@@ -32,7 +32,7 @@ def average_gradients(model):
     3. Average the gradients over the world_size (total number of devices)
     '''
     # BEGIN_HW5_1_2
-    for param in model.paramters():
+    for param in model.parameters():
         dist.all_reduce(param.grad.data)
 
         param.grad.data /= world_size
